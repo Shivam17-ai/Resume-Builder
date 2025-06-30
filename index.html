@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NSUT Resume Builder By Shivam</title>
+    <title>NSUT Resume Builder</title>
     <!-- Tailwind CSS CDN for basic styling -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- html2pdf.js CDN for PDF generation -->
@@ -13,13 +13,33 @@
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f3f4f6;
+            font-size: 0.9rem; /* Smaller base font for overall app */
         }
 
         .resume-container {
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
             border-radius: 0.5rem;
             background-color: #ffffff;
+            font-size: 0.9rem; /* Adjusted base font size for resume content */
         }
+
+        /* Adjust specific heading sizes within the resume preview */
+        #resumePreview h1 {
+            font-size: 2.25rem; /* Equivalent to text-4xl from Tailwind */
+        }
+        #resumePreview h2 {
+            font-size: 1.25rem; /* Equivalent to text-xl from Tailwind */
+        }
+        #resumePreview h3 {
+            font-size: 1.125rem; /* Equivalent to text-lg from Tailwind */
+        }
+        #resumePreview p, #resumePreview li, #resumePreview table {
+            font-size: 0.875rem; /* Smaller text-sm from Tailwind */
+        }
+        #resumePreview .text-sm { /* For contact info */
+            font-size: 0.875rem;
+        }
+
 
         /* Hide inputs and buttons when generating PDF */
         .hide-for-pdf {
@@ -176,10 +196,10 @@
             <div id="resumePreview" class="resume-container p-6 mx-auto" style="width: 8.5in; min-height: 11in;">
                 <!-- NSUT Logo and Header -->
                 <div class="flex items-center justify-between mb-6">
-                    <img src="nsut_logo.png" alt="NSUT Logo" class="w-20 h-20 rounded-md" onerror="this.onerror=null;this.src='https://placehold.co/100x100/cccccc/333333?text=Logo+Error';">
-                    <div class="flex-grow text-center"> <!-- Changed to text-center -->
-                        <h1 id="previewName" class="text-4xl font-bold text-gray-800 mb-1">Your Name</h1>
-                        <p id="previewContact" class="text-gray-600 text-md">
+                    <img src="https://placehold.co/100x100/eeeeee/333333?text=NSUT+Logo" alt="NSUT Logo" class="w-20 h-20 rounded-md" onerror="this.onerror=null;this.src='https://placehold.co/100x100/cccccc/333333?text=Logo+Error';">
+                    <div class="flex-grow text-center"> <!-- Centered name -->
+                        <h1 id="previewName" class="font-bold text-gray-800 mb-1" style="font-size: 2.25rem;">Your Name</h1> <!-- Adjusted font size directly here -->
+                        <p id="previewContact" class="text-gray-600" style="font-size: 0.875rem;">
                             <!-- Contact info will be dynamically added here -->
                         </p>
                     </div>
@@ -187,7 +207,7 @@
 
                 <!-- Education Section -->
                 <div id="educationSection" class="mb-6 hidden">
-                    <h2 class="text-xl font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700">EDUCATION</h2>
+                    <h2 class="font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700" style="font-size: 1.25rem;">EDUCATION</h2>
                     <table class="w-full text-left table-auto">
                         <thead>
                             <tr class="bg-gray-100">
@@ -205,7 +225,7 @@
 
                 <!-- Internships Section -->
                 <div id="internshipSection" class="mb-6 hidden">
-                    <h2 class="text-xl font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700">Internship/s</h2>
+                    <h2 class="font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700" style="font-size: 1.25rem;">Internship/s</h2>
                     <div id="internshipList">
                         <!-- Internships data will be added here by JS -->
                     </div>
@@ -213,7 +233,7 @@
 
                 <!-- Projects Section -->
                 <div id="projectSection" class="mb-6 hidden">
-                    <h2 class="text-xl font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700">PROJECTS</h2>
+                    <h2 class="font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700" style="font-size: 1.25rem;">PROJECTS</h2>
                     <div id="projectList">
                         <!-- Projects data will be added here by JS -->
                     </div>
@@ -221,7 +241,7 @@
 
                 <!-- Position of Responsibility Section -->
                 <div id="responsibilitySection" class="mb-6 hidden">
-                    <h2 class="text-xl font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700">Position of Responsibility</h2>
+                    <h2 class="font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700" style="font-size: 1.25rem;">Position of Responsibility</h2>
                     <div id="responsibilityList">
                         <!-- Responsibility data will be added here by JS -->
                     </div>
@@ -229,7 +249,7 @@
 
                 <!-- Technical Skills Section -->
                 <div id="technicalSkillsSection" class="mb-6 hidden">
-                    <h2 class="text-xl font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700">TECHNICAL SKILLS</h2>
+                    <h2 class="font-bold border-b-2 border-gray-400 pb-1 mb-3 text-gray-700" style="font-size: 1.25rem;">TECHNICAL SKILLS</h2>
                     <p id="previewLanguages" class="mb-1 hidden"><span class="font-semibold text-gray-800">Programming Languages:</span> </p>
                     <p id="previewWebTechnologies" class="mb-1 hidden"><span class="font-semibold text-gray-800">Web Technologies:</span> </p>
                     <p id="previewDatabases" class="mb-1 hidden"><span class="font-semibold text-gray-800">Databases:</span> </p>
@@ -273,7 +293,7 @@
             const addProjectBtn = document.getElementById('addProjectBtn');
             const projectInputsDiv = document.getElementById('projectInputs');
             const projectSection = document.getElementById('projectSection');
-            const projectList = document = document.getElementById('projectList');
+            const projectList = document.getElementById('projectList'); // Corrected reference
 
             // Responsibilities
             const addResponsibilityBtn = document.getElementById('addResponsibilityBtn');
@@ -371,7 +391,7 @@
                     const linkHtml = intern.link ? `<p class="text-sm mt-1">Project Link: <a href="${intern.link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${intern.link}</a></p>` : '';
 
                     div.innerHTML = `
-                        <h3 class="font-semibold text-lg text-gray-800">${intern.title} - ${intern.organization} <span class="text-gray-500 text-sm">(${intern.duration})</span></h3>
+                        <h3 class="font-semibold text-gray-800" style="font-size: 1.125rem;">${intern.title} - ${intern.organization} <span class="text-gray-500" style="font-size: 0.875rem;">(${intern.duration})</span></h3>
                         ${descriptionHtml}
                         ${linkHtml}
                     `;
@@ -405,7 +425,7 @@
                     const linkHtml = proj.link ? `<p class="text-sm mt-1">Project Link: <a href="${proj.link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${proj.link}</a></p>` : '';
 
                     div.innerHTML = `
-                        <h3 class="font-semibold text-lg text-gray-800">${proj.title}</h3>
+                        <h3 class="font-semibold text-gray-800" style="font-size: 1.125rem;">${proj.title}</h3>
                         ${descriptionHtml}
                         ${linkHtml}
                     `;
@@ -438,7 +458,7 @@
                     const linkHtml = res.link ? `<p class="text-sm mt-1">Project Link: <a href="${res.link}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">${res.link}</a></p>` : '';
 
                     div.innerHTML = `
-                        <h3 class="font-semibold text-lg text-gray-800">${res.title}</h3>
+                        <h3 class="font-semibold text-gray-800" style="font-size: 1.125rem;">${res.title}</h3>
                         ${descriptionHtml}
                         ${linkHtml}
                     `;
