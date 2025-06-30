@@ -315,7 +315,7 @@
                 <div id="outputEducation" class="space-y-3">
                     <!-- Education will be populated here -->
                     <div class="mb-2">
-                        <h3 class="text-lg font-semibold">Degree, Major</h3>
+                        <h3 class="text-lg font-semibold">Degree - Major</h3>
                         <p class="text-gray-700">University Name, City, State</p>
                         <p class="text-gray-600 text-sm">Graduation: Month Year</p>
                     </div>
@@ -347,8 +347,12 @@
                 <div id="outputProjects" class="space-y-4">
                     <!-- Projects will be populated here -->
                     <div class="mb-2">
-                        <h3 class="text-lg font-semibold">Project Title <span class="float-right text-gray-600">Year</span></h3>
-                        <p class="text-gray-700">Short description of the project.</p>
+                        <h3 class="text-lg font-semibold">${proj.name}
+                            <span class="float-right text-gray-600 text-sm">
+                                ${proj.year || ''}
+                                ${proj.url ? `<a href="${proj.url}" target="_blank" class="text-blue-600 hover:underline text-sm ml-2">View Project</a>` : ''}
+                            </span>
+                        </h3>
                         <ul class="list-disc list-inside text-gray-700 mt-1 ml-4">
                             <li>Key contribution or technology used 1</li>
                             <li>Key contribution or technology used 2</li>
@@ -541,8 +545,9 @@
             } else {
                 resumeData.education.forEach((edu, index) => {
                     const eduDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
+                    // Changed comma to dash for Degree - Major
                     eduDiv.innerHTML = `
-                        <h3 class="text-lg font-semibold">${edu.degree}, ${edu.major}</h3>
+                        <h3 class="text-lg font-semibold">${edu.degree} - ${edu.major}</h3>
                         <p class="text-gray-700">${edu.institution}, ${edu.location}</p>
                         <p class="text-gray-600 text-sm">Graduation: ${edu.gradDate}</p>
                     `;
@@ -575,8 +580,14 @@
                 resumeData.projects.forEach((proj, index) => {
                     const projDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
                     const descriptionsHtml = proj.description.split('\n').filter(item => item.trim() !== '').map(item => `<li>${item.trim()}</li>`).join('');
+                    
                     projDiv.innerHTML = `
-                        <h3 class="text-lg font-semibold">${proj.name} <span class="float-right text-gray-600 text-sm">${proj.year}</span></h3>
+                        <h3 class="text-lg font-semibold">${proj.name}
+                            <span class="float-right text-gray-600 text-sm">
+                                ${proj.year || ''}
+                                ${proj.url ? `<a href="${proj.url}" target="_blank" class="text-blue-600 hover:underline text-sm ml-2">View Project</a>` : ''}
+                            </span>
+                        </h3>
                         ${descriptionsHtml ? `<ul class="list-disc list-inside text-gray-700 mt-1 ml-4">${descriptionsHtml}</ul>` : ''}
                     `;
                     outputElements.projects.appendChild(projDiv);
@@ -734,7 +745,7 @@
             experienceEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
                 const title = entryDiv.querySelector('[id$="-title"]').value;
                 const company = entryDiv.querySelector('[id$="-company"]').value;
-                const location = entryDiv.querySelector('[id$="-location"]').value; // Corrected: Using entryDiv
+                const location = entryDiv.querySelector('[id$="-location"]').value;
                 const startDate = entryDiv.querySelector('[id$="-startDate"]').value;
                 const endDate = entryDiv.querySelector('[id$="-endDate"]').value;
                 const responsibilities = entryDiv.querySelector('[id$="-responsibilities"]').value;
@@ -767,6 +778,10 @@
                         <input type="text" id="${id}-year" class="w-full p-2 border rounded-md" placeholder="e.g., 2023" value="${proj.year || ''}">
                     </div>
                     <div class="input-group md:col-span-2">
+                        <label for="${id}-url" class="block text-sm mb-1">Project Link (Optional):</label>
+                        <input type="url" id="${id}-url" class="w-full p-2 border rounded-md" placeholder="e.g., https://myproject.com" value="${proj.url || ''}">
+                    </div>
+                    <div class="input-group md:col-span-2">
                         <label for="${id}-description" class="block text-sm mb-1">Description (one per line):</label>
                         <textarea id="${id}-description" rows="4" class="w-full p-2 border rounded-md" placeholder="Implemented user authentication.&#10Used React for frontend and Node.js for backend.">${proj.description || ''}</textarea>
                     </div>
@@ -792,10 +807,11 @@
             projectEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
                 const name = entryDiv.querySelector('[id$="-name"]').value;
                 const year = entryDiv.querySelector('[id$="-year"]').value;
+                const url = entryDiv.querySelector('[id$="-url"]').value; // Get the URL
                 const description = entryDiv.querySelector('[id$="-description"]').value;
 
-                if (name || year || description) {
-                    resumeData.projects.push({ name, year, description });
+                if (name || year || url || description) { // Include url in check
+                    resumeData.projects.push({ name, year, url, description }); // Store the URL
                 }
             });
             updateResumePreview();
