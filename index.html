@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Colorful Resume Builder</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- html2canvas and jspdf for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0f2f7 0%, #c5e4f3 100%); /* Light blue gradient background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+        .container-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            width: 100%;
+            max-width: 1400px; /* Max width for content */
+        }
+        @media (min-width: 768px) {
+            .container-wrapper {
+                flex-direction: row;
+                align-items: flex-start; /* Align top for side-by-side */
+            }
+        }
+        .form-section, .preview-section {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 1.25rem; /* More rounded corners */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); /* Stronger shadow */
+        }
+        .form-section {
+            width: 100%;
+            overflow-y: auto;
+            max-height: 90vh; /* Adjusted for overall padding */
+        }
+        .preview-section {
+            width: 100%;
+            overflow-y: auto;
+            max-height: 90vh; /* Adjusted for overall padding */
+            position: sticky;
+            top: 1.5rem; /* Stays sticky with page padding */
+        }
+        .section-header {
+            border-bottom: 3px solid #6366f1; /* Indigo-500 for a pop */
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+            font-size: 1.875rem; /* Larger font */
+            font-weight: 700; /* Bolder */
+            color: #1f2937; /* Darker gray for headers */
+        }
+        .input-group label {
+            font-weight: 600; /* Bolder labels */
+            color: #374151; /* Darker gray for labels */
+        }
+        input[type="text"], input[type="email"], input[type="tel"], input[type="url"], textarea {
+            border-width: 2px; /* Thicker border */
+            border-color: #d1d5db; /* Light gray */
+            transition: all 0.2s ease-in-out;
+        }
+        input[type="text"]:focus, input[type="email"]:focus, input[type="tel"]:focus, input[type="url"]:focus, textarea:focus {
+            border-color: #4f46e5; /* Indigo-600 on focus */
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* Indigo shadow on focus */
+        }
+        /* Custom scrollbar for preview area */
+        .preview-section::-webkit-scrollbar {
+            width: 8px;
+        }
+        .preview-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .preview-section::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .preview-section::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Animated button styles */
+        .btn-primary {
+            background-image: linear-gradient(to right, #6366f1 0%, #8b5cf6 100%); /* Indigo to Violet */
+            color: white;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px; /* Fully rounded */
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.4);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        .btn-primary:hover {
+            background-position: right center; /* Change gradient direction */
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.6);
+            transform: translateY(-2px);
+        }
+        .btn-secondary {
+            background-color: #22c55e; /* Green-500 */
+            color: white;
+            font-weight: 700;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            box-shadow: 0 3px 10px rgba(34, 197, 94, 0.3);
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #16a34a; /* Green-600 */
+            box-shadow: 0 5px 12px rgba(34, 197, 94, 0.5);
+            transform: translateY(-1px);
+        }
+        .btn-remove {
+            background-color: #ef4444; /* Red-500 */
+            color: white;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            transition: background-color 0.2s ease;
+        }
+        .btn-remove:hover {
+            background-color: #dc2626; /* Red-600 */
+        }
+
+        /* Specific styles for resume preview content */
+        #resumeOutput h1 {
+            color: #4338ca; /* Darker Indigo */
+        }
+        #resumeOutput h2 {
+            color: #4f46e5; /* Indigo-600 */
+        }
+        #resumeOutput h3 {
+            color: #1f2937; /* Dark gray */
+        }
+        #resumeOutput p, #resumeOutput li {
+            color: #4b5563; /* Gray-700 */
+        }
+        #resumeOutput a {
+            color: #2563eb; /* Blue-700 for links */
+        }
+        #resumeOutput a:hover {
+            color: #1d4ed8; /* Darker Blue-800 on hover */
+        }
+
+        /* Loading indicator for PDF generation */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            font-size: 1.5rem;
+            display: none; /* Hidden by default */
+        }
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 1rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="flex flex-col md:flex-row p-4 gap-4">
+
+    <!-- Input Form Section -->
+    <div class="w-full md:w-1/2 form-section">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Resume Builder</h2>
+
+        <!-- Personal Information -->
+        <section class="mb-8">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Personal Information</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="input-group">
+                    <label for="name" class="block text-sm mb-1">Full Name:</label>
+                    <input type="text" id="name" class="w-full p-2 border rounded-md focus:ring" placeholder="John Doe">
+                </div>
+                <div class="input-group">
+                    <label for="title" class="block text-sm mb-1">Professional Title:</label>
+                    <input type="text" id="title" class="w-full p-2 border rounded-md focus:ring" placeholder="Software Engineer">
+                </div>
+                <div class="input-group">
+                    <label for="email" class="block text-sm mb-1">Email:</label>
+                    <input type="email" id="email" class="w-full p-2 border rounded-md focus:ring" placeholder="john.doe@example.com">
+                </div>
+                <div class="input-group">
+                    <label for="phone" class="block text-sm mb-1">Phone:</label>
+                    <input type="tel" id="phone" class="w-full p-2 border rounded-md focus:ring" placeholder="(123) 456-7890">
+                </div>
+                <div class="input-group md:col-span-2">
+                    <label for="linkedin" class="block text-sm mb-1">LinkedIn Profile:</label>
+                    <input type="url" id="linkedin" class="w-full p-2 border rounded-md focus:ring" placeholder="linkedin.com/in/johndoe">
+                </div>
+                <div class="input-group md:col-span-2">
+                    <label for="github" class="block text-sm mb-1">GitHub Profile:</label>
+                    <input type="url" id="github" class="w-full p-2 border rounded-md focus:ring" placeholder="github.com/johndoe">
+                </div>
+                <div class="input-group md:col-span-2">
+                    <label for="leetcode" class="block text-sm mb-1">LeetCode Profile:</label>
+                    <input type="url" id="leetcode" class="w-full p-2 border rounded-md focus:ring" placeholder="leetcode.com/johndoe">
+                </div>
+                <div class="input-group md:col-span-2">
+                    <label for="summary" class="block text-sm mb-1">Summary/Objective:</label>
+                    <textarea id="summary" rows="4" class="w-full p-2 border rounded-md focus:ring" placeholder="A brief, compelling summary of your professional background and goals."></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- Education Section -->
+        <section class="mb-8" id="education-section">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Education</h3>
+            <div id="education-entries" class="space-y-4">
+                <!-- Education entries will be added here by JS -->
+            </div>
+            <button type="button" id="addEducationBtn" class="mt-4 btn-secondary">
+                Add Education
+            </button>
+        </section>
+
+        <!-- Internship Section -->
+        <section class="mb-8" id="experience-section">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Internship</h3>
+            <div id="experience-entries" class="space-y-4">
+                <!-- Internship entries will be added here by JS -->
+            </div>
+            <button type="button" id="addExperienceBtn" class="mt-4 btn-secondary">
+                Add Internship
+            </button>
+        </section>
+
+        <!-- Skills Section -->
+        <section class="mb-8">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Skills</h3>
+            <div class="input-group">
+                <label for="skills" class="block text-sm mb-1">Skills (comma-separated):</label>
+                <input type="text" id="skills" class="w-full p-2 border rounded-md focus:ring" placeholder="JavaScript, React, Python, Data Analysis">
+            </div>
+        </section>
+
+        <!-- Projects Section (Optional) -->
+        <section class="mb-8" id="projects-section">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Projects (Optional)</h3>
+            <div id="project-entries" class="space-y-4">
+                <!-- Project entries will be added here by JS -->
+            </div>
+            <button type="button" id="addProjectBtn" class="mt-4 btn-secondary">
+                Add Project
+            </button>
+        </section>
+
+        <!-- Positions of Responsibility Section (Optional) -->
+        <section class="mb-8" id="responsibility-section">
+            <h3 class="text-2xl font-semibold text-blue-700 mb-4 section-header">Positions of Responsibility (Optional)</h3>
+            <div id="responsibility-entries" class="space-y-4">
+                <!-- Responsibility entries will be added here by JS -->
+            </div>
+            <button type="button" id="addResponsibilityBtn" class="mt-4 btn-secondary">
+                Add Position of Responsibility
+            </button>
+        </section>
+
+    </div>
+
+    <!-- Resume Preview Section -->
+    <div class="w-full md:w-1/2 preview-section resume-preview">
+        <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Resume Preview</h2>
+        <div id="resumeOutput" class="p-4 border border-gray-200 rounded-lg min-h-[500px] text-gray-800 leading-relaxed">
+            <!-- Resume content will be dynamically inserted here -->
+            <div class="text-center mb-6">
+                <h1 id="outputName" class="text-4xl font-extrabold text-blue-800 mb-1">Your Name</h1>
+                <p id="outputTitle" class="text-xl text-gray-600 mb-2">Professional Title</p>
+                <p class="text-sm text-gray-500">
+                    <span id="outputEmail" class="mr-2">email@example.com</span>
+                    <span id="outputPhoneSeparator" class="ml-2 hidden">|</span>
+                    <span id="outputPhone" class="ml-2"> (123) 456-7890</span>
+                    <br>
+                    <a id="outputLinkedIn" href="#" target="_blank" class="text-blue-600 hover:underline inline-block mx-1">LinkedIn</a>
+                    <span id="outputLinkedInSeparator" class="hidden">|</span>
+                    <a id="outputGitHub" href="#" target="_blank" class="text-blue-600 hover:underline inline-block mx-1">GitHub</a>
+                    <span id="outputGitHubSeparator" class="hidden">|</span>
+                    <a id="outputLeetCode" href="#" target="_blank" class="text-blue-600 hover:underline inline-block mx-1">LeetCode</a>
+                </p>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Summary</h2>
+                <p id="outputSummary" class="text-gray-700">A brief, compelling summary of your professional background and goals will appear here.</p>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Education</h2>
+                <div id="outputEducation" class="space-y-3">
+                    <!-- Education will be populated here -->
+                    <div class="mb-2">
+                        <h3 class="text-lg font-semibold">Degree, Major</h3>
+                        <p class="text-gray-700">University Name, City, State</p>
+                        <p class="text-gray-600 text-sm">Graduation: Month Year</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Internship</h2>
+                <div id="outputExperience" class="space-y-4">
+                    <!-- Internship will be populated here -->
+                    <div class="mb-2">
+                        <h3 class="text-lg font-semibold">Job Title <span class="float-right text-gray-600">Start Date - End Date</span></h3>
+                        <p class="text-gray-700">Company Name, City, State</p>
+                        <ul class="list-disc list-inside text-gray-700 mt-1 ml-4">
+                            <li>Responsibility or achievement 1</li>
+                            <li>Responsibility or achievement 2</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Skills</h2>
+                <p id="outputSkills" class="text-gray-700">Skills will appear here (e.g., JavaScript, React, Python).</p>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Projects</h2>
+                <div id="outputProjects" class="space-y-4">
+                    <!-- Projects will be populated here -->
+                    <div class="mb-2">
+                        <h3 class="text-lg font-semibold">Project Title <span class="float-right text-gray-600">Year</span></h3>
+                        <p class="text-gray-700">Short description of the project.</p>
+                        <ul class="list-disc list-inside text-gray-700 mt-1 ml-4">
+                            <li>Key contribution or technology used 1</li>
+                            <li>Key contribution or technology used 2</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <h2 class="text-2xl font-semibold text-blue-700 mb-2 section-header">Positions of Responsibility</h2>
+                <div id="outputResponsibility" class="space-y-4">
+                    <!-- Positions of Responsibility will be populated here -->
+                    <div class="mb-2">
+                        <h3 class="text-lg font-semibold">Role Title <span class="float-right text-gray-600">Start Date - End Date</span></h3>
+                        <p class="text-gray-700">Organization Name, City, State</p>
+                        <ul class="list-disc list-inside text-gray-700 mt-1 ml-4">
+                            <li>Key achievement or responsibility 1</li>
+                            <li>Key achievement or responsibility 2</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="text-center mt-6">
+            <button id="downloadPdfBtn" class="btn-primary">
+                Download Resume as PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>Generating PDF...</p>
+    </div>
+
+    <script>
+        // --- Helper Function to create elements ---
+        function createElement(tag, classes = [], attributes = {}) {
+            const element = document.createElement(tag);
+            if (classes.length > 0) {
+                element.classList.add(...classes);
+            }
+            for (const key in attributes) {
+                element.setAttribute(key, attributes[key]);
+            }
+            return element;
+        }
+
+        // --- Resume Data Object ---
+        let resumeData = {
+            personal: {
+                name: "Your Name",
+                title: "Professional Title",
+                email: "email@example.com",
+                phone: "(123) 456-7890",
+                linkedin: "",
+                github: "",
+                leetcode: "",
+                summary: "A brief, compelling summary of your professional background and goals will appear here."
+            },
+            education: [],
+            experience: [], // Renamed from 'workExperience' to 'experience' for flexibility, but refers to internships here
+            skills: "",
+            projects: [],
+            responsibilities: [] // New: Positions of Responsibility
+        };
+
+        // --- Input Elements ---
+        const inputElements = {
+            name: document.getElementById('name'),
+            title: document.getElementById('title'),
+            email: document.getElementById('email'),
+            phone: document.getElementById('phone'),
+            linkedin: document.getElementById('linkedin'),
+            github: document.getElementById('github'),
+            leetcode: document.getElementById('leetcode'),
+            summary: document.getElementById('summary'),
+            skills: document.getElementById('skills')
+        };
+
+        const outputElements = {
+            name: document.getElementById('outputName'),
+            title: document.getElementById('outputTitle'),
+            email: document.getElementById('outputEmail'),
+            phone: document.getElementById('outputPhone'),
+            linkedin: document.getElementById('outputLinkedIn'),
+            github: document.getElementById('outputGitHub'),
+            leetcode: document.getElementById('outputLeetCode'),
+            summary: document.getElementById('outputSummary'),
+            education: document.getElementById('outputEducation'),
+            experience: document.getElementById('outputExperience'),
+            skills: document.getElementById('outputSkills'),
+            projects: document.getElementById('outputProjects'),
+            responsibility: document.getElementById('outputResponsibility'), // New: Output for Responsibilities
+            // Separator spans for conditional display
+            phoneSeparator: document.getElementById('outputPhoneSeparator'),
+            linkedinSeparator: document.getElementById('outputLinkedInSeparator'),
+            githubSeparator: document.getElementById('outputGitHubSeparator')
+        };
+
+        const addEducationBtn = document.getElementById('addEducationBtn');
+        const educationEntriesContainer = document.getElementById('education-entries');
+        const addExperienceBtn = document.getElementById('addExperienceBtn'); // Still refers to Internship
+        const experienceEntriesContainer = document.getElementById('experience-entries'); // Still refers to Internship
+        const addProjectBtn = document.getElementById('addProjectBtn');
+        const projectEntriesContainer = document.getElementById('project-entries');
+        const addResponsibilityBtn = document.getElementById('addResponsibilityBtn'); // New: Add Responsibility button
+        const responsibilityEntriesContainer = document.getElementById('responsibility-entries'); // New: Responsibility entries container
+        const downloadPdfBtn = document.getElementById('downloadPdfBtn'); // Download button
+        const loadingOverlay = document.getElementById('loadingOverlay'); // Loading overlay
+
+        // --- Update Resume Preview Function ---
+        function updateResumePreview() {
+            // Personal Info
+            outputElements.name.textContent = resumeData.personal.name || "Your Name";
+            outputElements.title.textContent = resumeData.personal.title || "Professional Title";
+
+            // Update email and phone text
+            outputElements.email.textContent = resumeData.personal.email || "email@example.com";
+            outputElements.phone.textContent = resumeData.personal.phone || ""; // Default empty for phone
+
+            // Helper to update and toggle link visibility and text
+            function updateLink(element, url, defaultText = '') {
+                if (url) {
+                    element.href = url.startsWith('http') ? url : `https://${url}`;
+                    element.textContent = defaultText || url.replace(/(^\w+:|^)\/\//, '');
+                    element.style.display = 'inline-block';
+                    return true;
+                } else {
+                    element.textContent = '';
+                    element.style.display = 'none';
+                    element.href = '#'; // Reset href
+                    return false;
+                }
+            }
+
+            const hasLinkedIn = updateLink(outputElements.linkedin, resumeData.personal.linkedin, 'LinkedIn');
+            const hasGitHub = updateLink(outputElements.github, resumeData.personal.github, 'GitHub');
+            const hasLeetCode = updateLink(outputElements.leetcode, resumeData.personal.leetcode, 'LeetCode');
+
+            // Manage separators dynamically
+            // Phone separator
+            if (resumeData.personal.email && resumeData.personal.phone) {
+                outputElements.phoneSeparator.classList.remove('hidden');
+            } else {
+                outputElements.phoneSeparator.classList.add('hidden');
+            }
+
+            // Link separators
+            outputElements.linkedinSeparator.classList.add('hidden');
+            outputElements.githubSeparator.classList.add('hidden');
+
+            // Logic to correctly display separators between active links
+            const links = [outputElements.linkedin, outputElements.github, outputElements.leetcode];
+            let activeLinkCount = 0;
+            for(let i = 0; i < links.length; i++) {
+                if (links[i].style.display === 'inline-block') {
+                    activeLinkCount++;
+                    // If it's not the last active link, and there's another active link after it
+                    if (i < links.length - 1) {
+                        let foundNextActive = false;
+                        for(let j = i + 1; j < links.length; j++) {
+                            if (links[j].style.display === 'inline-block') {
+                                // Dynamically find the separator span and show it
+                                if (links[i].id === 'outputLinkedIn') {
+                                    outputElements.linkedinSeparator.classList.remove('hidden');
+                                } else if (links[i].id === 'outputGitHub') {
+                                    outputElements.githubSeparator.classList.remove('hidden');
+                                }
+                                foundNextActive = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            outputElements.summary.textContent = resumeData.personal.summary || "A brief, compelling summary of your professional background and goals will appear here.";
+
+            // Skills
+            outputElements.skills.textContent = resumeData.skills || "Skills will appear here (e.g., JavaScript, React, Python).";
+
+            // Education
+            outputElements.education.innerHTML = ''; // Clear previous entries
+            if (resumeData.education.length === 0) {
+                 outputElements.education.innerHTML = `<div class="text-gray-500 text-sm">No education entries yet. Click "Add Education" to add one.</div>`;
+            } else {
+                resumeData.education.forEach((edu, index) => {
+                    const eduDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
+                    eduDiv.innerHTML = `
+                        <h3 class="text-lg font-semibold">${edu.degree}, ${edu.major}</h3>
+                        <p class="text-gray-700">${edu.institution}, ${edu.location}</p>
+                        <p class="text-gray-600 text-sm">Graduation: ${edu.gradDate}</p>
+                    `;
+                    outputElements.education.appendChild(eduDiv);
+                });
+            }
+
+            // Internship (formerly Experience)
+            outputElements.experience.innerHTML = ''; // Clear previous entries
+            if (resumeData.experience.length === 0) {
+                outputElements.experience.innerHTML = `<div class="text-gray-500 text-sm">No internship entries yet. Click "Add Internship" to add one.</div>`;
+            } else {
+                resumeData.experience.forEach((exp, index) => {
+                    const expDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
+                    const responsibilitiesHtml = exp.responsibilities.split('\n').filter(item => item.trim() !== '').map(item => `<li>${item.trim()}</li>`).join('');
+                    expDiv.innerHTML = `
+                        <h3 class="text-lg font-semibold">${exp.title} <span class="float-right text-gray-600 text-sm">${exp.startDate} - ${exp.endDate}</span></h3>
+                        <p class="text-gray-700">${exp.company}, ${exp.location}</p>
+                        ${responsibilitiesHtml ? `<ul class="list-disc list-inside text-gray-700 mt-1 ml-4">${responsibilitiesHtml}</ul>` : ''}
+                    `;
+                    outputElements.experience.appendChild(expDiv);
+                });
+            }
+
+            // Projects
+            outputElements.projects.innerHTML = ''; // Clear previous entries
+            if (resumeData.projects.length === 0) {
+                outputElements.projects.innerHTML = `<div class="text-gray-500 text-sm">No project entries yet. Click "Add Project" to add one.</div>`;
+            } else {
+                resumeData.projects.forEach((proj, index) => {
+                    const projDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
+                    const descriptionsHtml = proj.description.split('\n').filter(item => item.trim() !== '').map(item => `<li>${item.trim()}</li>`).join('');
+                    projDiv.innerHTML = `
+                        <h3 class="text-lg font-semibold">${proj.name} <span class="float-right text-gray-600 text-sm">${proj.year}</span></h3>
+                        ${descriptionsHtml ? `<ul class="list-disc list-inside text-gray-700 mt-1 ml-4">${descriptionsHtml}</ul>` : ''}
+                    `;
+                    outputElements.projects.appendChild(projDiv);
+                });
+            }
+
+            // Positions of Responsibility (New)
+            outputElements.responsibility.innerHTML = ''; // Clear previous entries
+            if (resumeData.responsibilities.length === 0) {
+                outputElements.responsibility.innerHTML = `<div class="text-gray-500 text-sm">No positions of responsibility yet. Click "Add Position of Responsibility" to add one.</div>`;
+            } else {
+                resumeData.responsibilities.forEach((resp, index) => {
+                    const respDiv = createElement('div', ['mb-2', 'p-2', 'border', 'border-gray-100', 'rounded-md', 'bg-white']);
+                    const achievementsHtml = resp.achievements.split('\n').filter(item => item.trim() !== '').map(item => `<li>${item.trim()}</li>`).join('');
+                    respDiv.innerHTML = `
+                        <h3 class="text-lg font-semibold">${resp.title} <span class="float-right text-gray-600 text-sm">${resp.startDate} - ${resp.endDate}</span></h3>
+                        <p class="text-gray-700">${resp.organization}, ${resp.location}</p>
+                        ${achievementsHtml ? `<ul class="list-disc list-inside text-gray-700 mt-1 ml-4">${achievementsHtml}</ul>` : ''}
+                    `;
+                    outputElements.responsibility.appendChild(respDiv);
+                });
+            }
+        }
+
+        // --- Event Listeners for Personal Info & Skills ---
+        for (const key in inputElements) {
+            inputElements[key].addEventListener('input', (event) => {
+                if (key === 'skills') {
+                    resumeData.skills = event.target.value;
+                } else {
+                    resumeData.personal[key] = event.target.value;
+                }
+                updateResumePreview();
+            });
+        }
+
+        // --- Education Section Logic ---
+        let educationCounter = 0;
+        function createEducationEntry(edu = {}) {
+            const id = `edu-${educationCounter++}`;
+            const div = createElement('div', ['bg-gray-50', 'p-4', 'rounded-md', 'border', 'border-gray-200', 'mb-4']);
+            div.setAttribute('data-id', id);
+
+            div.innerHTML = `
+                <h4 class="text-lg font-medium text-gray-800 mb-2">Education Entry</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div class="input-group">
+                        <label for="${id}-degree" class="block text-sm mb-1">Degree:</label>
+                        <input type="text" id="${id}-degree" class="w-full p-2 border rounded-md" placeholder="e.g., B.Sc." value="${edu.degree || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-major" class="block text-sm mb-1">Major:</label>
+                        <input type="text" id="${id}-major" class="w-full p-2 border rounded-md" placeholder="e.g., Computer Science" value="${edu.major || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-institution" class="block text-sm mb-1">Institution:</label>
+                        <input type="text" id="${id}-institution" class="w-full p-2 border rounded-md" placeholder="e.g., University of XYZ" value="${edu.institution || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-location" class="block text-sm mb-1">Location:</label>
+                        <input type="text" id="${id}-location" class="w-full p-2 border rounded-md" placeholder="e.g., City, State" value="${edu.location || ''}">
+                    </div>
+                    <div class="input-group md:col-span-2">
+                        <label for="${id}-gradDate" class="block text-sm mb-1">Graduation Date:</label>
+                        <input type="text" id="${id}-gradDate" class="w-full p-2 border rounded-md" placeholder="e.g., May 2023" value="${edu.gradDate || ''}">
+                    </div>
+                </div>
+                <button type="button" class="remove-education-btn btn-remove">Remove</button>
+            `;
+
+            educationEntriesContainer.appendChild(div);
+
+            // Add event listeners to new inputs
+            div.querySelectorAll('input').forEach(input => {
+                input.addEventListener('input', updateEducationData);
+            });
+            div.querySelector('.remove-education-btn').addEventListener('click', () => {
+                div.remove();
+                updateEducationData(); // Re-render after removal
+            });
+            updateEducationData(); // Initial update
+        }
+
+        function updateEducationData() {
+            resumeData.education = [];
+            educationEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
+                const degree = entryDiv.querySelector('[id$="-degree"]').value;
+                const major = entryDiv.querySelector('[id$="-major"]').value;
+                const institution = entryDiv.querySelector('[id$="-institution"]').value;
+                const location = entryDiv.querySelector('[id$="-location"]').value;
+                const gradDate = entryDiv.querySelector('[id$="-gradDate"]').value;
+
+                if (degree || major || institution || location || gradDate) {
+                    resumeData.education.push({ degree, major, institution, location, gradDate });
+                }
+            });
+            updateResumePreview();
+        }
+
+        addEducationBtn.addEventListener('click', () => createEducationEntry());
+
+        // --- Internship Section Logic ---
+        let experienceCounter = 0;
+        function createExperienceEntry(exp = {}) {
+            const id = `exp-${experienceCounter++}`;
+            const div = createElement('div', ['bg-gray-50', 'p-4', 'rounded-md', 'border', 'border-gray-200', 'mb-4']);
+            div.setAttribute('data-id', id);
+
+            div.innerHTML = `
+                <h4 class="text-lg font-medium text-gray-800 mb-2">Internship Entry</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div class="input-group">
+                        <label for="${id}-title" class="block text-sm mb-1">Role Title:</label>
+                        <input type="text" id="${id}-title" class="w-full p-2 border rounded-md" placeholder="e.g., Software Engineering Intern" value="${exp.title || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-company" class="block text-sm mb-1">Company:</label>
+                        <input type="text" id="${id}-company" class="w-full p-2 border rounded-md" placeholder="e.g., Tech Solutions Inc." value="${exp.company || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-location" class="block text-sm mb-1">Location:</label>
+                        <input type="text" id="${id}-location" class="w-full p-2 border rounded-md" placeholder="e.g., City, State" value="${exp.location || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-startDate" class="block text-sm mb-1">Start Date:</label>
+                        <input type="text" id="${id}-startDate" class="w-full p-2 border rounded-md" placeholder="e.g., Jan 2020" value="${exp.startDate || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-endDate" class="block text-sm mb-1">End Date:</label>
+                        <input type="text" id="${id}-endDate" class="w-full p-2 border rounded-md" placeholder="e.g., Present or Dec 2022" value="${exp.endDate || ''}">
+                    </div>
+                    <div class="input-group md:col-span-2">
+                        <label for="${id}-responsibilities" class="block text-sm mb-1">Responsibilities (one per line):</label>
+                        <textarea id="${id}-responsibilities" rows="4" class="w-full p-2 border rounded-md" placeholder="Developed and maintained web applications.&#10Managed a team of 3 developers.">${exp.responsibilities || ''}</textarea>
+                    </div>
+                </div>
+                <button type="button" class="remove-experience-btn btn-remove">Remove</button>
+            `;
+
+            experienceEntriesContainer.appendChild(div);
+
+            // Add event listeners to new inputs
+            div.querySelectorAll('input, textarea').forEach(input => {
+                input.addEventListener('input', updateExperienceData);
+            });
+            div.querySelector('.remove-experience-btn').addEventListener('click', () => {
+                div.remove();
+                updateExperienceData(); // Re-render after removal
+            });
+            updateExperienceData(); // Initial update
+        }
+
+        function updateExperienceData() {
+            resumeData.experience = [];
+            experienceEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
+                const title = entryDiv.querySelector('[id$="-title"]').value;
+                const company = entryDiv.querySelector('[id$="-company"]').value;
+                const location = entryDiv.querySelector('[id$="-location"]').value; // Corrected: Using entryDiv
+                const startDate = entryDiv.querySelector('[id$="-startDate"]').value;
+                const endDate = entryDiv.querySelector('[id$="-endDate"]').value;
+                const responsibilities = entryDiv.querySelector('[id$="-responsibilities"]').value;
+
+                if (title || company || location || startDate || endDate || responsibilities) {
+                    resumeData.experience.push({ title, company, location, startDate, endDate, responsibilities });
+                }
+            });
+            updateResumePreview();
+        }
+
+        addExperienceBtn.addEventListener('click', () => createExperienceEntry());
+
+        // --- Projects Section Logic ---
+        let projectCounter = 0;
+        function createProjectEntry(proj = {}) {
+            const id = `proj-${projectCounter++}`;
+            const div = createElement('div', ['bg-gray-50', 'p-4', 'rounded-md', 'border', 'border-gray-200', 'mb-4']);
+            div.setAttribute('data-id', id);
+
+            div.innerHTML = `
+                <h4 class="text-lg font-medium text-gray-800 mb-2">Project Entry</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div class="input-group">
+                        <label for="${id}-name" class="block text-sm mb-1">Project Name:</label>
+                        <input type="text" id="${id}-name" class="w-full p-2 border rounded-md" placeholder="e.g., E-commerce Platform" value="${proj.name || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-year" class="block text-sm mb-1">Year:</label>
+                        <input type="text" id="${id}-year" class="w-full p-2 border rounded-md" placeholder="e.g., 2023" value="${proj.year || ''}">
+                    </div>
+                    <div class="input-group md:col-span-2">
+                        <label for="${id}-description" class="block text-sm mb-1">Description (one per line):</label>
+                        <textarea id="${id}-description" rows="4" class="w-full p-2 border rounded-md" placeholder="Implemented user authentication.&#10Used React for frontend and Node.js for backend.">${proj.description || ''}</textarea>
+                    </div>
+                </div>
+                <button type="button" class="remove-project-btn btn-remove">Remove</button>
+            `;
+
+            projectEntriesContainer.appendChild(div);
+
+            // Add event listeners to new inputs
+            div.querySelectorAll('input, textarea').forEach(input => {
+                input.addEventListener('input', updateProjectData);
+            });
+            div.querySelector('.remove-project-btn').addEventListener('click', () => {
+                div.remove();
+                updateProjectData(); // Re-render after removal
+            });
+            updateProjectData(); // Initial update
+        }
+
+        function updateProjectData() {
+            resumeData.projects = [];
+            projectEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
+                const name = entryDiv.querySelector('[id$="-name"]').value;
+                const year = entryDiv.querySelector('[id$="-year"]').value;
+                const description = entryDiv.querySelector('[id$="-description"]').value;
+
+                if (name || year || description) {
+                    resumeData.projects.push({ name, year, description });
+                }
+            });
+            updateResumePreview();
+        }
+
+        addProjectBtn.addEventListener('click', () => createProjectEntry());
+
+        // --- Positions of Responsibility Section Logic (New) ---
+        let responsibilityCounter = 0;
+        function createResponsibilityEntry(resp = {}) {
+            const id = `resp-${responsibilityCounter++}`;
+            const div = createElement('div', ['bg-gray-50', 'p-4', 'rounded-md', 'border', 'border-gray-200', 'mb-4']);
+            div.setAttribute('data-id', id);
+
+            div.innerHTML = `
+                <h4 class="text-lg font-medium text-gray-800 mb-2">Responsibility Entry</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                    <div class="input-group">
+                        <label for="${id}-title" class="block text-sm mb-1">Role Title:</label>
+                        <input type="text" id="${id}-title" class="w-full p-2 border rounded-md" placeholder="e.g., Club President" value="${resp.title || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-organization" class="block text-sm mb-1">Organization:</label>
+                        <input type="text" id="${id}-organization" class="w-full p-2 border rounded-md" placeholder="e.g., Student Government" value="${resp.organization || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-location" class="block text-sm mb-1">Location:</label>
+                        <input type="text" id="${id}-location" class="w-full p-2 border rounded-md" placeholder="e.g., City, State" value="${resp.location || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-startDate" class="block text-sm mb-1">Start Date:</label>
+                        <input type="text" id="${id}-startDate" class="w-full p-2 border rounded-md" placeholder="e.g., Sep 2021" value="${resp.startDate || ''}">
+                    </div>
+                    <div class="input-group">
+                        <label for="${id}-endDate" class="block text-sm mb-1">End Date:</label>
+                        <input type="text" id="${id}-endDate" class="w-full p-2 border rounded-md" placeholder="e.g., May 2023" value="${resp.endDate || ''}">
+                    </div>
+                    <div class="input-group md:col-span-2">
+                        <label for="${id}-achievements" class="block text-sm mb-1">Key Achievements/Responsibilities (one per line):</label>
+                        <textarea id="${id}-achievements" rows="4" class="w-full p-2 border rounded-md" placeholder="Led a team of 10 volunteers.&#10Organized fundraising events.">${resp.achievements || ''}</textarea>
+                    </div>
+                </div>
+                <button type="button" class="remove-responsibility-btn btn-remove">Remove</button>
+            `;
+
+            responsibilityEntriesContainer.appendChild(div);
+
+            // Add event listeners to new inputs
+            div.querySelectorAll('input, textarea').forEach(input => {
+                input.addEventListener('input', updateResponsibilityData);
+            });
+            div.querySelector('.remove-responsibility-btn').addEventListener('click', () => {
+                div.remove();
+                updateResponsibilityData(); // Re-render after removal
+            });
+            updateResponsibilityData(); // Initial update
+        }
+
+        function updateResponsibilityData() {
+            resumeData.responsibilities = [];
+            responsibilityEntriesContainer.querySelectorAll('.bg-gray-50').forEach(entryDiv => {
+                const title = entryDiv.querySelector('[id$="-title"]').value;
+                const organization = entryDiv.querySelector('[id$="-organization"]').value;
+                const location = entryDiv.querySelector('[id$="-location"]').value;
+                const startDate = entryDiv.querySelector('[id$="-startDate"]').value;
+                const endDate = entryDiv.querySelector('[id$="-endDate"]').value;
+                const achievements = entryDiv.querySelector('[id$="-achievements"]').value;
+
+                if (title || organization || location || startDate || endDate || achievements) {
+                    resumeData.responsibilities.push({ title, organization, location, startDate, endDate, achievements });
+                }
+            });
+            updateResumePreview();
+        }
+
+        addResponsibilityBtn.addEventListener('click', () => createResponsibilityEntry());
+
+
+        // --- PDF Download Functionality ---
+        downloadPdfBtn.addEventListener('click', async () => {
+            loadingOverlay.style.display = 'flex'; // Show loading overlay
+
+            const resumeElement = document.getElementById('resumeOutput');
+            // Temporarily adjust styles for better PDF rendering
+            resumeElement.style.padding = '20px'; // Add some padding for the content in PDF
+            resumeElement.style.border = 'none'; // Remove border for cleaner PDF
+
+            try {
+                const canvas = await html2canvas(resumeElement, {
+                    scale: 2, // Increase scale for better quality
+                    useCORS: true,
+                    logging: true,
+                    allowTaint: true,
+                    scrollX: 0,
+                    scrollY: 0,
+                    windowWidth: resumeElement.scrollWidth,
+                    windowHeight: resumeElement.scrollHeight
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({
+                    orientation: 'portrait',
+                    unit: 'px',
+                    format: [canvas.width, canvas.height] // Use canvas dimensions
+                });
+
+                pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+                const filename = `${resumeData.personal.name.replace(/\s+/g, '_') || 'Resume'}.pdf`;
+                pdf.save(filename);
+            } catch (error) {
+                console.error("Error generating PDF:", error);
+                // In a real app, you'd show a user-friendly error message here
+                alert("Failed to generate PDF. Please try again.");
+            } finally {
+                loadingOverlay.style.display = 'none'; // Hide loading overlay
+                // Restore original styles
+                resumeElement.style.padding = '';
+                resumeElement.style.border = '';
+            }
+        });
+
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Populate initial empty sections to show the structure
+            createEducationEntry();
+            createExperienceEntry(); // For Internship
+            createProjectEntry();
+            createResponsibilityEntry(); // For Positions of Responsibility
+            updateResumePreview(); // Render initial state
+        });
+    </script>
+</body>
+</html>
