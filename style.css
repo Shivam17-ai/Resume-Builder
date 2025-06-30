@@ -1,0 +1,68 @@
+/* Custom styles for responsiveness and specific elements */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6;
+    font-size: 0.9rem; /* Smaller base font for overall app */
+}
+
+.resume-container {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border-radius: 0.5rem;
+    background-color: #ffffff;
+    font-size: 0.9rem; /* Adjusted base font size for resume content */
+}
+
+/* Adjust specific heading sizes within the resume preview */
+#resumePreview h1 {
+    font-size: 2.25rem; /* Equivalent to text-4xl from Tailwind */
+}
+#resumePreview h2 {
+    font-size: 1.25rem; /* Equivalent to text-xl from Tailwind */
+}
+#resumePreview h3 {
+    font-size: 1.125rem; /* Equivalent to text-lg from Tailwind */
+}
+#resumePreview p, #resumePreview li, #resumePreview table {
+    font-size: 0.875rem; /* Smaller text-sm from Tailwind */
+}
+#resumePreview .text-sm { /* For contact info */
+    font-size: 0.875rem;
+}
+
+
+/* Hide inputs and buttons when generating PDF */
+.hide-for-pdf {
+    display: none !important;
+}
+
+/* Textarea auto-resize */
+textarea {
+    resize: vertical; /* Allow vertical resizing by user */
+    overflow: hidden; /* Hide scrollbar when content fits */
+    min-height: 2.5rem; /* Equivalent to input field height */
+}
+
+@media print {
+    body {
+        margin: 0;
+        padding: 0;
+    }
+    .fixed {
+        display: none !important;
+    }
+    .lg:w-2\/5 {
+        display: none !important;
+    }
+    .lg:w-3\/5 {
+        width: 100% !important;
+    }
+    .resume-container {
+        width: 8.5in !important;
+        min-height: 11in !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .editable-input {
+        display: none !important; /* Hide input fields in print view */
+    }
+}
